@@ -19,6 +19,9 @@ add_subdirectory(${GLFW_DIR})
 set(GLM_DIR external/glm)
 add_subdirectory(${GLM_DIR})
 
+# STB
+set(STB_DIR external/stb)
+
 # GLSL PARSER
 set(GLSl_PARSER_DIR external/glsl-parser)
 set(GLSL_PARSER_SOURCES
@@ -52,10 +55,10 @@ target_link_libraries(${RUN_EXEC}
 )
 target_include_directories(${RUN_EXEC}
 	PRIVATE include
-    PRIVATE external
 	PRIVATE ${GLFW_DIR}/include
     PRIVATE ${GLAD_DIR}/include
 	PRIVATE ${GLM_DIR}/include
+	PRIVATE ${STB_DIR}
 	PRIVATE ${GLSL_PARSER_DIR}
 )
 
