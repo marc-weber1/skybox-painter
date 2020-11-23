@@ -10,6 +10,11 @@
 #include <sstream>
 #include <iostream>
 
+// v why is this necessary???
+#include <windows.h>
+#include "parser.h"
+
+
 class Shader
 {
 public:

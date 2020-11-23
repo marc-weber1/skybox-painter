@@ -16,17 +16,19 @@
 
 #include "LookAtCamera.h" //Replace?
 #include "Shader.h"
-#include "skyboxshapes.h"
+#include "SkyboxCube.h"
 
 
 // CONSTANTS
 const int SCR_HEIGHT = 600;
 const int SCR_WIDTH = 800;
+const double ROTATE_SPEED_X = -500; // Change the sign to invert the axis
+const double ROTATE_SPEED_Y = -300; // Change the sign to invert the axis
 
 // GLOBAL VARIABLES
 LookAtCamera camera(glm::vec3(0.f,0.f,0.f),0.1f);
+std::unique_ptr<SkyboxCube> skybox;
 std::unique_ptr<Shader> current_shader;
-GLuint VertexBufferID, VertexVAOID;
 double lastMouseX = 0.;
 double lastMouseY = 0.;
 bool should_redraw = false;
@@ -41,20 +43,28 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+	should_redraw=true;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
-	if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_PRESS){
+	if(button==GLFW_MOUSE_BUTTON_RIGHT && action==GLFW_PRESS){
 		// Begin rotating
 		glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
 	}
 }
 
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
-	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_1)==GLFW_PRESS){
-		// Rotate around
+	
+	//Handle rotations
+	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_RIGHT)==GLFW_PRESS){
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
 		
-		camera.rotateCamera((GLfloat) (lastMouseX-xpos),(GLfloat) (lastMouseY-ypos));
+		// Rotate around, accounting for the window size
+		camera.rotateCamera(
+			(GLfloat) ( ROTATE_SPEED_X/width*(lastMouseX-xpos) ),
+			(GLfloat) ( ROTATE_SPEED_Y/height*(lastMouseY-ypos) )
+		);
 		
 		lastMouseX=xpos;
 		lastMouseY=ypos;
@@ -78,7 +88,7 @@ void redraw_display(GLFWwindow* window){
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(3.0);
 	
-	glDrawArrays( GL_TRIANGLES, 0, sizeof(SKYBOX_CUBE)/sizeof(SkyboxVertex) );
+	skybox->drawVertices();
 	
 	// Present frame
 	glfwSwapBuffers(window);
@@ -123,35 +133,12 @@ int main(){
     }
 	
 	
-	//Configure buffer
-	glGenBuffers(1,&VertexBufferID);
-	glBindBuffer(GL_ARRAY_BUFFER,VertexBufferID);
-	
-	//Generate VAO
-	glGenVertexArrays(1,&VertexVAOID);
-	glBindVertexArray(VertexVAOID);
-	//Where are the data chunks in the buffer?
-	int stride = sizeof(SkyboxVertex);
-	glVertexAttribPointer( //position
-		0,3,GL_FLOAT,GL_FALSE,stride,(void*)0
-	);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer( //normals
-		1,3,GL_FLOAT,GL_FALSE,stride,(void*) sizeof(glm::vec3)
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer( //tex coords
-		2,2,GL_FLOAT,GL_FALSE,stride,(void*) (2*sizeof(glm::vec3))
-	);
-	glEnableVertexAttribArray(2);
-	
 	// Load shader
 	current_shader.reset(new Shader("shaders/default.vs","shaders/solidwhite.fs"));
 	current_shader->use();
 	
-	// Buffer model (just cube for now)
-	glBufferData( GL_ARRAY_BUFFER, sizeof(SKYBOX_CUBE), SKYBOX_CUBE, GL_STATIC_DRAW );
-	
+	// Initialize the skybox, including buffering it as a mesh to GPU
+	skybox.reset(new SkyboxCube());
 	
 	should_redraw = true; // Draw the first frame
 	

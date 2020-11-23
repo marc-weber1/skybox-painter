@@ -19,11 +19,23 @@ add_subdirectory(${GLFW_DIR})
 set(GLM_DIR external/glm)
 add_subdirectory(${GLM_DIR})
 
+# GLSL PARSER
+set(GLSl_PARSER_DIR external/glsl-parser)
+set(GLSL_PARSER_SOURCES
+	external/glsl-parser/util.cpp
+	external/glsl-parser/ast.cpp
+	external/glsl-parser/lexer.cpp
+	external/glsl-parser/parser.cpp
+	)
+add_library(glsl-parser ${GLSL_PARSER_SOURCES})
+target_include_directories(glsl-parser PRIVATE ${GLSL_PARSER_DIR})
+
 set(GRAPHICS_LIBS
 	${OPENGL_LIBRARY}
 	glad
 	glfw
 	glm
+	glsl-parser
 )
 
 
@@ -44,6 +56,7 @@ target_include_directories(${RUN_EXEC}
 	PRIVATE ${GLFW_DIR}/include
     PRIVATE ${GLAD_DIR}/include
 	PRIVATE ${GLM_DIR}/include
+	PRIVATE ${GLSL_PARSER_DIR}
 )
 
 
