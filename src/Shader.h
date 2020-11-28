@@ -9,10 +9,14 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 // v why is this necessary???
 #include <windows.h>
 #include "parser.h"
+
+//v Replace this with an interface?
+#include "TextureCube.h"
 
 
 class Shader
@@ -100,6 +104,11 @@ public:
         glDeleteShader(fragment);
         if (geometryPath != nullptr)
             glDeleteShader(geometry);
+			
+		// FOR TESTING, in the future figure out how many textures there are
+		GLuint texture0;
+		glGenTextures(1,&texture0);
+		textures.push_back(texture0);
 
     }
     // activate the shader
@@ -172,8 +181,26 @@ public:
         int n = sizeof(arr) / sizeof(arr[0]);
         glUniform3fv(glGetUniformLocation(ID, name.c_str()), n, glm::value_ptr(arr[0]));
     }
+	
+	bool setTexture(TextureCube* tex, unsigned int index = 0){
+		if(index >= textures.size()) return false;
+		
+		// Test with 1 texture
+		glActiveTexture(GL_TEXTURE0 + index);
+		glBindTexture(GL_TEXTURE_2D, textures[index]);
+		tex->setActiveTexture();
+		
+		return true;
+		
+	}
+	
+	unsigned int getNumTextures(){
+		return 0; //Implement later
+	}
 
 private:
+	std::vector<GLuint> textures; // Should have no more than 16 elements
+
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
     void checkCompileErrors(GLuint shader, std::string type)

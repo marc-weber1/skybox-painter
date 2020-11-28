@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #include "LookAtCamera.h" //Replace?
 #include "Shader.h"
@@ -28,6 +29,7 @@ const double ROTATE_SPEED_Y = -300; // Change the sign to invert the axis
 // GLOBAL VARIABLES
 LookAtCamera camera(glm::vec3(0.f,0.f,0.f),0.1f);
 std::unique_ptr<SkyboxCube> skybox;
+std::vector<TextureCube> skybox_textures;
 std::unique_ptr<Shader> current_shader;
 double lastMouseX = 0.;
 double lastMouseY = 0.;
@@ -84,9 +86,9 @@ void redraw_display(GLFWwindow* window){
 	current_shader->setMat4("VP",VP);
 	
 	// DEBUG WIREFRAME RENDER
-	glClear(GL_COLOR_BUFFER_BIT);
+	/*glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glLineWidth(3.0);
+	glLineWidth(3.0);*/
 	
 	skybox->drawVertices();
 	
@@ -133,9 +135,13 @@ int main(){
     }
 	
 	
-	// Load shader
-	current_shader.reset(new Shader("shaders/default.vs","shaders/solidwhite.fs"));
+	// Load Shader
+	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
 	current_shader->use();
+	
+	// Load Image
+	skybox_textures.push_back( TextureCube("skyboxcube_textbox.png") );
+	current_shader->setTexture( &skybox_textures[0], 0 );
 	
 	// Initialize the skybox, including buffering it as a mesh to GPU
 	skybox.reset(new SkyboxCube());
