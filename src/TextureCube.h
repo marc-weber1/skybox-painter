@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <filesystem>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -11,6 +12,7 @@ public:
 	TextureCube(const char* file_path){
 		stbi_set_flip_vertically_on_load(true);
 		data = stbi_load(file_path, &width, &height, &nrChannels, 0);
+		//std::cout << (int) data[0] << (int) data[1] << (int) data[2] << (int) data[3] << std::endl;
 		if(!data){
 			std::cerr << "Could not load texture " << file_path << std::endl;
 		}
