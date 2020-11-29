@@ -140,7 +140,7 @@ int main(){
 	current_shader->use();
 	
 	// Load Image
-	skybox_textures.push_back( TextureCube("skyboxcube_textbox.png") );
+	skybox_textures.push_back( TextureCube("E:/Users/facade/Documents/Github/skybox-painter/model-converter/skyboxcube_testbox.png") );
 	current_shader->setTexture( &skybox_textures[0], 0 );
 	
 	// Initialize the skybox, including buffering it as a mesh to GPU
@@ -168,5 +168,10 @@ int main(){
 	}
 	
 	glfwTerminate();
+	
+	for(int i=0; i<skybox_textures.size(); i++){
+		skybox_textures[i].free();
+	}
+	
 	return 0;
 }
