@@ -1,2 +1,4 @@
 build/*
+out/build/*
 model-converter/build/*
+.vs/*
