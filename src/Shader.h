@@ -182,6 +182,8 @@ public:
         glUniform3fv(glGetUniformLocation(ID, name.c_str()), n, glm::value_ptr(arr[0]));
     }
 	
+	
+	
 	bool setTexture(TextureCube* tex, unsigned int index = 0){
 		if(index >= textures.size()) return false;
 		
@@ -202,6 +204,7 @@ public:
 
 private:
 	std::vector<GLuint> textures; // Should have no more than 16 elements
+	std::vector<std::string> texture_names; //Should be same length as above
 
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------

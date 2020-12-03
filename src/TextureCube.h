@@ -1,9 +1,14 @@
 #pragma once
 
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+
 #include <iostream>
 #include <filesystem>
 
 // #include <stb_image.h>
+
+#include "SkyboxCube.h"
 
 
 class TextureCube{
@@ -24,6 +29,10 @@ public:
 	void setActiveTexture(){
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	
+	void drawRect(glm::vec2 topLeft, glm::vec2 topRight, glm::vec2 bottomLeft, glm::vec2 bottomRight){ // Draw a rectangle of red as a test
+		
 	}
 	
 private:

@@ -9,6 +9,7 @@ int main(){
 	model.import("skyboxcube.obj");
 	
 	int indices = model.getNumberOfIndices();
+	printf("%d\n",indices);
 	const int* indexbuf = model.getIndexBuffer();
 	for(int i=0; i<indices; i++){
 		const ModelOBJ::Vertex& v = model.getVertex( indexbuf[i] );
