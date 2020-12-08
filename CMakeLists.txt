@@ -55,11 +55,11 @@ target_link_libraries(${RUN_EXEC}
 )
 target_include_directories(${RUN_EXEC}
 	PRIVATE include
+	PRIVATE external
 	PRIVATE ${GLFW_DIR}/include
     PRIVATE ${GLAD_DIR}/include
 	PRIVATE ${GLM_DIR}/include
 	PRIVATE ${STB_DIR}
-	PRIVATE ${GLSL_PARSER_DIR}
 )
 
 

@@ -32,22 +32,28 @@ const int SCR_HEIGHT = 600;
 const int SCR_WIDTH = 800;
 const double ROTATE_SPEED_X = -500; // Change the sign to invert the axis
 const double ROTATE_SPEED_Y = -300; // Change the sign to invert the axis
+const GLenum DRAW_BUFFERS[1] = {GL_COLOR_ATTACHMENT0};
+const double FRAMES_PER_SECOND = 60.;
 
 // GLOBAL VARIABLES
 LookAtCamera camera(glm::vec3(0.f,0.f,0.f),0.1f);
 std::unique_ptr<SkyboxCube> skybox;
 std::vector<TextureCube> skybox_textures;
+int current_texture = -1; // Should be a number from 0 to skybox_textures.size()-1, or -1 if no texture is selected
+std::unique_ptr<Shader> texture_shader;
 std::unique_ptr<Shader> current_shader;
 double lastMouseX = 0.;
 double lastMouseY = 0.;
-bool should_redraw = false;
+//bool should_redraw = true; //Should we redraw the frame?
+bool drawing = false;
+bool should_redraw_texture = false;
+GLuint texture_framebuffer = 0;
 
 int brush = 0;
 glm::vec4 brushColour = glm::vec4(1, 1, 1, 1);
 
 // Timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+double lastFrame = 0.0;
 
 
 // ------ INPUT HANDLING FUNCTIONS ------
@@ -57,13 +63,24 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
-	should_redraw=true;
+	//should_redraw = true;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+	
 	if(button==GLFW_MOUSE_BUTTON_RIGHT && action==GLFW_PRESS){
 		// Begin rotating
 		glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
+	}
+	
+	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_PRESS){
+		glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
+		drawing = true;
+		should_redraw_texture = true;
+	}
+	
+	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_RELEASE){
+		drawing = false;
 	}
 }
 
@@ -83,8 +100,11 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
 		lastMouseX=xpos;
 		lastMouseY=ypos;
 		
-		should_redraw=true;
+		//should_redraw=true;
 	}
+	
+	//Handle drawing
+	
 }
 
 // ------ GUI FUNCTIONS ------
@@ -137,6 +157,19 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
 
 void redraw_display(GLFWwindow* window){
 	
+	// Bind the correct framebuffer in case we're on one that renders to image right now
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// And fix the screen size
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	glViewport(0, 0, width, height);
+	
+	// Make sure we're on the right shader
+	current_shader->use();
+	
+	// Set the correct textures (Not sure if necessary?)
+	skybox_textures[0].setActiveTexture();
+	
 	// Update camera angle
 	glm::mat4 VP = glm::perspective(camera.getFOV(), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f)*camera.getViewMatrix();
 	current_shader->setMat4("VP",VP);
@@ -147,10 +180,21 @@ void redraw_display(GLFWwindow* window){
 	glLineWidth(3.0);*/
 	
 	skybox->drawVertices();
-	
-	// Present frame
-	// glfwSwapBuffers(window);
 
+}
+
+void redraw_texture(TextureCube* tex){
+	glBindFramebuffer(GL_FRAMEBUFFER, texture_framebuffer);
+	glViewport(0,0,tex->width,tex->height);
+	
+	texture_shader->use();
+	
+	skybox_textures[0].setActiveTexture(); //Necessary? probably
+	
+	// Set uniforms
+	// ???
+	
+	skybox->drawVertices();
 }
 
 // ------ INITIALIZATION / MAIN LOOP ------
@@ -189,21 +233,34 @@ int main(){
         return -1;
     }
 	
+	// Load texturing Shader
+	texture_shader.reset(new Shader("shaders/retexture.vs","shaders/retexture.fs"));
 	
-	// Load Shader
+	// Load Rendering Shader
 	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
-	current_shader->use();
 	
 	// Load Image
 	skybox_textures.push_back( TextureCube("E:/Users/facade/Documents/Github/skybox-painter/model-converter/skyboxcube_testbox.png") );
-	current_shader->setTexture( &skybox_textures[0], 0 );
+	current_texture = 0;
+	
+	// Set up framebuffer to render to (TURNS THE IMAGE BLACK?)
+	glGenFramebuffers(1, &texture_framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, texture_framebuffer);
+	skybox_textures[current_texture].setRenderTarget();
+	glDrawBuffers(1, DRAW_BUFFERS);
+	
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+		std::cerr << "Could not initialize image framebuffer;" << std::endl;
+		std::cerr << glGetError() << std::endl;
+		return -1;
+	}
 	
 	// Initialize the skybox, including buffering it as a mesh to GPU
 	skybox.reset(new SkyboxCube());
 
 	// Initialize ImGui
 	// The following setup code is taken from https://blog.conan.io/2019/06/26/An-introduction-to-the-Dear-ImGui-library.html
-	const char* glsl_version = "#version 130";
+	const char* glsl_version = "#version 330 core";
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -226,97 +283,94 @@ int main(){
 		std::cout << ret << std::endl;
 	}
 	
-	should_redraw = true; // Draw the first frame
-	
 	bool continue_program = true;
-	while(continue_program){
-		// per-frame time logic
-		// --------------------
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+	while(continue_program){ // Main Event Loop
+
 
 		//Check input
 		glfwPollEvents();
-
-		// Clear screen
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		//Check for exit
 		if(glfwGetKey(window,GLFW_KEY_ESCAPE)==GLFW_PRESS || 
 			glfwWindowShouldClose(window)!=0){
 			continue_program=false;
-			should_redraw=false;
 		}
-
-		// Feed inputs to ImGui, start new frame
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		// Create GUI
-		ImGui::Begin("File");
-		{
-			// Import/Export
-			if (ImGui::Button("Import")) {
-				Import();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Export")) {
-				Export();
-			}
-		}
-		ImGui::End();
-
-		// TODO: Figure out whether RadioButton with images or ImageButton works better
-		ImGui::Begin("Brushes");
-		{
-			for (int i = 0; i < brushTextures.size(); i++) {
-				ImGui::SameLine();
-				std::string name = "Brush " + std::to_string(i);
-				ImGui::RadioButton(name.c_str(), &brush, i); 
-				
-			}
-			ImGui::NewLine();
-			for (int i = 0; i < brushTextures.size(); i++) {
-				ImGui::SameLine(0, 16);
-				ImVec4 border;
-				if (brush == i) {
-					border = ImVec4(0.26, 0.96, 0.26, 1);
-				}
-				else {
-					border = ImVec4(0, 0, 0, 0);
-				}
-				ImGui::Image((void*)(intptr_t)brushTextures[i], ImVec2(64, 64), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border);
-			}
-			ImGui::NewLine();
-			ImGui::ColorEdit4("Brush Colour", glm::value_ptr(brushColour));
-		}
-		ImGui::End();
 		
-		//Draw frame
-		if(should_redraw){
+		
+		// per-frame time logic
+		// --------------------
+		double currentFrame = glfwGetTime();
+		double deltaTime = currentFrame - lastFrame;
+		
+		if(continue_program && deltaTime >= 1./FRAMES_PER_SECOND){ // Time imgui so the FPS is capped at some maximum
+		
+			// Starting a new frame, reset the timer
+			lastFrame = currentFrame;
+			
+			// If the texture needs to be redrawn, do that first (Maybe move this to its own timer/thread?)
+			if(should_redraw_texture && current_texture >= 0 && current_texture < skybox_textures.size()){
+				redraw_texture( &skybox_textures[current_texture] );
+				should_redraw_texture = false;
+			}
+
+			// Feed inputs to ImGui, start new frame
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			// Create GUI
+			ImGui::Begin("File");
+			{
+				// Import/Export
+				if (ImGui::Button("Import")) {
+					Import();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Export")) {
+					Export();
+				}
+			}
+			ImGui::End();
+
+			// TODO: Figure out whether RadioButton with images or ImageButton works better
+			ImGui::Begin("Brushes");
+			{
+				for (int i = 0; i < brushTextures.size(); i++) {
+					ImGui::SameLine();
+					std::string name = "Brush " + std::to_string(i);
+					ImGui::RadioButton(name.c_str(), &brush, i); 
+					
+				}
+				ImGui::NewLine();
+				for (int i = 0; i < brushTextures.size(); i++) {
+					ImGui::SameLine(0, 16);
+					ImVec4 border;
+					if (brush == i) {
+						border = ImVec4(0.26, 0.96, 0.26, 1);
+					}
+					else {
+						border = ImVec4(0, 0, 0, 0);
+					}
+					ImGui::Image((void*)(intptr_t)brushTextures[i], ImVec2(64, 64), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), border);
+				}
+				ImGui::NewLine();
+				ImGui::ColorEdit4("Brush Colour", glm::value_ptr(brushColour));
+			}
+			ImGui::End();
+			
+			// First render the skybox
 			redraw_display(window);
-			// This is set to true to allow ImGui to work as intended
-			should_redraw=true;
+
+			// Then render ImGui into screen
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			
+			glfwSwapBuffers(window);
 		}
-
-		// Render ImGui into screen
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		int display_w, display_h;
-		glfwGetFramebufferSize(window, &display_w, &display_h);
-		glViewport(0, 0, display_w, display_h);
-		glfwSwapBuffers(window);
+		
 	}
 	
 	glfwTerminate();
-	
-	for(int i=0; i<skybox_textures.size(); i++){
-		skybox_textures[i].free();
-	}
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

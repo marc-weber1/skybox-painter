@@ -11,9 +11,7 @@
 #include <iostream>
 #include <vector>
 
-// v why is this necessary???
-#include <windows.h>
-#include "parser.h"
+#include "glsl-parser/parser.h"
 
 //v Replace this with an interface?
 #include "TextureCube.h"
@@ -104,6 +102,12 @@ public:
         glDeleteShader(fragment);
         if (geometryPath != nullptr)
             glDeleteShader(geometry);
+			
+			
+		// PARSE SHADER (to get number of textures)
+		/*glsl::parser shader_parser(fShaderCode, fragmentPath);
+		glsl::astTU *tu = shader_parser.parse(glsl::astTU::kFragment);
+		std::cout << tu->globals.size() << std::endl;*/
 			
 		// FOR TESTING, in the future figure out how many textures there are
 		GLuint texture0;

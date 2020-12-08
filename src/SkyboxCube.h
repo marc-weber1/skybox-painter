@@ -54,10 +54,6 @@ public:
 		//Unbind VAO for safety
 		glBindVertexArray(0);
 	}
-	
-	void raycast(glm::vec3 direction, GLfloat radius, std::vector<UVBox>* uv_rects_out){
-		
-	}
 
 	glm::vec2 getCubeSkyboxUV(glm::vec2 ray_dir){
 		return glm::vec2();
