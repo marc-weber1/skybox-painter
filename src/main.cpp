@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -45,8 +46,9 @@ std::unique_ptr<Shader> current_shader;
 double lastMouseX = 0.;
 double lastMouseY = 0.;
 //bool should_redraw = true; //Should we redraw the frame?
-bool drawing = false;
 bool should_redraw_texture = false;
+glm::vec2 previous_brush_point;
+glm::vec2 current_brush_point;
 GLuint texture_framebuffer = 0;
 
 int brush = 0;
@@ -74,22 +76,28 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 	
 	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_PRESS){
-		glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
-		drawing = true;
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		double xpos, ypos;
+		glfwGetCursorPos(window,&xpos,&ypos);
+		
+		// Begin Drawing
+		current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
 		should_redraw_texture = true;
 	}
 	
 	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_RELEASE){
-		drawing = false;
+		// Release the previous point so the shader doesn't get confused
+		previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
 	}
 }
 
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
 	
 	//Handle rotations
 	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_RIGHT)==GLFW_PRESS){
-		int width, height;
-		glfwGetWindowSize(window, &width, &height);
 		
 		// Rotate around, accounting for the window size
 		camera.rotateCamera(
@@ -97,14 +105,17 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
 			(GLfloat) ( ROTATE_SPEED_Y/height*(lastMouseY-ypos) )
 		);
 		
-		lastMouseX=xpos;
-		lastMouseY=ypos;
-		
 		//should_redraw=true;
 	}
 	
 	//Handle drawing
+	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS){
+		current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
+		should_redraw_texture = true;
+	}
 	
+	lastMouseX=xpos;
+	lastMouseY=ypos;
 }
 
 // ------ GUI FUNCTIONS ------
@@ -171,7 +182,7 @@ void redraw_display(GLFWwindow* window){
 	skybox_textures[0].setActiveTexture();
 	
 	// Update camera angle
-	glm::mat4 VP = glm::perspective(camera.getFOV(), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f)*camera.getViewMatrix();
+	glm::mat4 VP = glm::perspective(camera.getFOV(), 1.f * width / height, 0.1f, 10.f) * camera.getViewMatrix();
 	current_shader->setMat4("VP",VP);
 	
 	// DEBUG WIREFRAME RENDER
@@ -183,7 +194,7 @@ void redraw_display(GLFWwindow* window){
 
 }
 
-void redraw_texture(TextureCube* tex){
+void redraw_texture(TextureCube* tex, GLfloat window_aspect_ratio){
 	glBindFramebuffer(GL_FRAMEBUFFER, texture_framebuffer);
 	glViewport(0,0,tex->width,tex->height);
 	
@@ -191,10 +202,17 @@ void redraw_texture(TextureCube* tex){
 	
 	skybox_textures[0].setActiveTexture(); //Necessary? probably
 	
+	// Set the matrix so it can rasterize-check instead of raycast
+	glm::mat4 VP = glm::perspective(camera.getFOV(), window_aspect_ratio, 0.1f, 10.f) * camera.getViewMatrix();
+	current_shader->setMat4("VP",VP);
+	
 	// Set uniforms
-	// ???
+	texture_shader->setVec2("previousPoint",previous_brush_point);
+	texture_shader->setVec2("currentPoint",current_brush_point);
 	
 	skybox->drawVertices();
+	
+	previous_brush_point = current_brush_point;
 }
 
 // ------ INITIALIZATION / MAIN LOOP ------
@@ -235,6 +253,7 @@ int main(){
 	
 	// Load texturing Shader
 	texture_shader.reset(new Shader("shaders/retexture.vs","shaders/retexture.fs"));
+	previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
 	
 	// Load Rendering Shader
 	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
@@ -285,8 +304,7 @@ int main(){
 	
 	bool continue_program = true;
 	while(continue_program){ // Main Event Loop
-
-
+		
 		//Check input
 		glfwPollEvents();
 		
@@ -309,7 +327,10 @@ int main(){
 			
 			// If the texture needs to be redrawn, do that first (Maybe move this to its own timer/thread?)
 			if(should_redraw_texture && current_texture >= 0 && current_texture < skybox_textures.size()){
-				redraw_texture( &skybox_textures[current_texture] );
+				int width, height;
+				glfwGetWindowSize(window, &width, &height);
+				
+				redraw_texture( &skybox_textures[current_texture], 1.f*width/height );
 				should_redraw_texture = false;
 			}
 

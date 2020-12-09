@@ -46,10 +46,6 @@ public:
 		glBindTexture(GL_TEXTURE_2D, tex);
 	}
 	
-	void drawRect(glm::vec2 topLeft, glm::vec2 topRight, glm::vec2 bottomLeft, glm::vec2 bottomRight){ // Draw a rectangle of red as a test
-		
-	}
-	
 	int width, height, nrChannels;
 	
 private:
