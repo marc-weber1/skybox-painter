@@ -26,6 +26,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imfilebrowser.h"
 
 
 // CONSTANTS
@@ -70,61 +71,63 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
 	
-	if(button==GLFW_MOUSE_BUTTON_RIGHT && action==GLFW_PRESS){
-		// Begin rotating
-		glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
-	}
+	// Make sure the mouse isnt clicking on a UI window
+	if( !ImGui::GetIO().WantCaptureMouse){
 	
-	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_PRESS){
-		int width, height;
-		glfwGetWindowSize(window, &width, &height);
-		double xpos, ypos;
-		glfwGetCursorPos(window,&xpos,&ypos);
+		if(button==GLFW_MOUSE_BUTTON_RIGHT && action==GLFW_PRESS){
+			// Begin rotating
+			glfwGetCursorPos(window,&lastMouseX,&lastMouseY);
+		}
 		
-		// Begin Drawing
-		current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
-		should_redraw_texture = true;
-	}
-	
-	else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_RELEASE){
-		// Release the previous point so the shader doesn't get confused
-		previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
+		else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_PRESS){
+			int width, height;
+			glfwGetWindowSize(window, &width, &height);
+			double xpos, ypos;
+			glfwGetCursorPos(window,&xpos,&ypos);
+			
+			// Begin Drawing
+			current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
+			should_redraw_texture = true;
+		}
+		
+		else if(button==GLFW_MOUSE_BUTTON_LEFT && action==GLFW_RELEASE){
+			// Release the previous point so the shader doesn't get confused
+			previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
+		}
+		
 	}
 }
 
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
 	
-	//Handle rotations
-	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_RIGHT)==GLFW_PRESS){
+	// Make sure the mouse isnt clicking on a UI window
+	if( !ImGui::GetIO().WantCaptureMouse){
+	
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
 		
-		// Rotate around, accounting for the window size
-		camera.rotateCamera(
-			(GLfloat) ( ROTATE_SPEED_X/width*(lastMouseX-xpos) ),
-			(GLfloat) ( ROTATE_SPEED_Y/height*(lastMouseY-ypos) )
-		);
+		//Handle rotations
+		if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_RIGHT)==GLFW_PRESS){
+			
+			// Rotate around, accounting for the window size
+			camera.rotateCamera(
+				(GLfloat) ( ROTATE_SPEED_X/width*(lastMouseX-xpos) ),
+				(GLfloat) ( ROTATE_SPEED_Y/height*(lastMouseY-ypos) )
+			);
+			
+			//should_redraw=true;
+		}
 		
-		//should_redraw=true;
+		//Handle drawing
+		if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS){
+			current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
+			should_redraw_texture = true;
+		}
+		
+		lastMouseX=xpos;
+		lastMouseY=ypos;
+		
 	}
-	
-	//Handle drawing
-	if(glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS){
-		current_brush_point = glm::vec2( 2.*xpos/width-1., -2.*ypos/height+1 );
-		should_redraw_texture = true;
-	}
-	
-	lastMouseX=xpos;
-	lastMouseY=ypos;
-}
-
-// ------ GUI FUNCTIONS ------
-void Import() {
-	std::cout << "Import\n";
-}
-
-void Export() {
-	std::cout << "Export\n";
 }
 
 
@@ -215,6 +218,7 @@ void redraw_texture(TextureCube* tex, GLfloat window_aspect_ratio){
 	previous_brush_point = current_brush_point;
 }
 
+
 // ------ INITIALIZATION / MAIN LOOP ------
 int main(){
 	// glfw: initialize and configure
@@ -259,7 +263,7 @@ int main(){
 	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
 	
 	// Load Image
-	skybox_textures.push_back( TextureCube("E:/Users/facade/Documents/Github/skybox-painter/model-converter/skyboxcube_testbox.png") );
+	skybox_textures.push_back( TextureCube("E:/Users/facade/Documents/Github/skybox-painter/model-converter/skyboxcube_test2.png") );
 	current_texture = 0;
 	
 	// Set up framebuffer to render to (TURNS THE IMAGE BLACK?)
@@ -302,6 +306,14 @@ int main(){
 		std::cout << ret << std::endl;
 	}
 	
+	// Set up file dialogs
+	ImGui::FileBrowser importImage;
+	importImage.SetTitle("Import Image");
+	// importImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
+	ImGui::FileBrowser exportImage(ImGuiFileBrowserFlags_EnterNewFilename);
+	exportImage.SetTitle("Export Image");
+	exportImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
+	
 	bool continue_program = true;
 	while(continue_program){ // Main Event Loop
 		
@@ -339,19 +351,32 @@ int main(){
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
-			// Create GUI
+
+			// Create Menus
 			ImGui::Begin("File");
 			{
 				// Import/Export
-				if (ImGui::Button("Import")) {
-					Import();
+				if (ImGui::Button("Import Image")) {
+					importImage.Open();
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("Export")) {
-					Export();
+				if (ImGui::Button("Export Image")) {
+					exportImage.Open();
 				}
 			}
 			ImGui::End();
+			
+			//File pickers
+			importImage.Display();
+			if(importImage.HasSelected()){
+				std::cout << "Importing from: " << importImage.GetSelected().string() << std::endl;
+				importImage.ClearSelected();
+			}
+			exportImage.Display();
+			if(exportImage.HasSelected()){
+				std::cout << "Exporting to: " << exportImage.GetSelected().string() << std::endl;
+				exportImage.ClearSelected();
+			}
 
 			// TODO: Figure out whether RadioButton with images or ImageButton works better
 			ImGui::Begin("Brushes");
@@ -378,6 +403,7 @@ int main(){
 				ImGui::ColorEdit4("Brush Colour", glm::value_ptr(brushColour));
 			}
 			ImGui::End();
+			
 			
 			// First render the skybox
 			redraw_display(window);
