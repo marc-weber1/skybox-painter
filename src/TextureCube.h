@@ -13,14 +13,27 @@
 
 class TextureCube{
 public:
-	TextureCube(const char* file_path){
+	TextureCube() : width(1), height(1), nrChannels(4){
 		glGenTextures(1, &tex);
+		
+		glBindTexture(GL_TEXTURE_2D, tex);
+		// v Initialize with a transparent black image
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		
+		//glBindTexture(GL_TEXTURE_2D,0); //Reset
+	}
+	
+	bool import(const char* file_path){
 		
 		stbi_set_flip_vertically_on_load(true);
 		unsigned char* data = stbi_load(file_path, &width, &height, &nrChannels, 0);
 		//std::cout << (int) data[0] << (int) data[1] << (int) data[2] << (int) data[3] << std::endl;
 		if(!data){
-			std::cerr << "Could not load texture " << file_path << std::endl;
+			std::cout << "Failed to load texture." << std::endl;
+			return false;
 		}
 		
 		glBindTexture(GL_TEXTURE_2D, tex);
@@ -28,14 +41,10 @@ public:
 		// Also errorcheck so that data is freed no matter what
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		
-		//glGenerateMipmap(GL_TEXTURE_2D); //Should not be necessary
-		
 		free(data);
 		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		
 		//glBindTexture(GL_TEXTURE_2D,0); //Reset
+		return true;
 	}
 	
 	void setRenderTarget(){
@@ -50,6 +59,5 @@ public:
 	
 private:
 	GLuint tex;
-	
 	
 };

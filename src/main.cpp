@@ -263,7 +263,7 @@ int main(){
 	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
 	
 	// Load Image
-	skybox_textures.push_back( TextureCube("E:/Users/facade/Documents/Github/skybox-painter/model-converter/skyboxcube_test2.png") );
+	skybox_textures.push_back( TextureCube() );
 	current_texture = 0;
 	
 	// Set up framebuffer to render to (TURNS THE IMAGE BLACK?)
@@ -309,10 +309,10 @@ int main(){
 	// Set up file dialogs
 	ImGui::FileBrowser importImage;
 	importImage.SetTitle("Import Image");
-	// importImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
+	importImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
 	ImGui::FileBrowser exportImage(ImGuiFileBrowserFlags_EnterNewFilename);
 	exportImage.SetTitle("Export Image");
-	exportImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
+	// exportImage.SetTypeFilters({".png",".jpg",".bmp",".hdr",".gif",".pic"});
 	
 	bool continue_program = true;
 	while(continue_program){ // Main Event Loop
@@ -369,7 +369,8 @@ int main(){
 			//File pickers
 			importImage.Display();
 			if(importImage.HasSelected()){
-				std::cout << "Importing from: " << importImage.GetSelected().string() << std::endl;
+				// std::cout << "Importing image from: " << importImage.GetSelected().generic_string() << std::endl;
+				skybox_textures[0].import( (char*) importImage.GetSelected().generic_string().c_str() );
 				importImage.ClearSelected();
 			}
 			exportImage.Display();
