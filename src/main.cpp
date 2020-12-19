@@ -375,7 +375,9 @@ int main(){
 			}
 			exportImage.Display();
 			if(exportImage.HasSelected()){
-				std::cout << "Exporting to: " << exportImage.GetSelected().string() << std::endl;
+				std::cout << "Saved texture to: " << exportImage.GetSelected().generic_string().c_str() << std::endl;
+				// Edit filepath so it always has a png at the end? Right now people have to type it in themself
+				skybox_textures[0].exportCubemap( exportImage.GetSelected().generic_string().c_str() );
 				exportImage.ClearSelected();
 			}
 

@@ -5,8 +5,12 @@
 
 #include <iostream>
 #include <filesystem>
+#include <cstdlib>
 
 // #include <stb_image.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 #include "SkyboxCube.h"
 
@@ -24,6 +28,10 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		
 		//glBindTexture(GL_TEXTURE_2D,0); //Reset
+	}
+	
+	void freeTexture(){
+		glDeleteTextures( 1, &tex );
 	}
 	
 	bool import(const char* file_path){
@@ -45,6 +53,23 @@ public:
 		
 		//glBindTexture(GL_TEXTURE_2D,0); //Reset
 		return true;
+	}
+	
+	void exportCubemap(const char* filepath){
+		// Edit filepath so it has a png at the end?
+		const unsigned int NUM_CHANNELS = 4;
+		
+		size_t image_size = width*height*NUM_CHANNELS;
+		void* ram_buffer = malloc( image_size );
+		
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, ram_buffer);
+		
+		stbi_flip_vertically_on_write(true);
+		stbi_write_png(filepath, width, height, NUM_CHANNELS, ram_buffer, width*NUM_CHANNELS );
+		
+		free(ram_buffer);
+		
 	}
 	
 	void setRenderTarget(){
