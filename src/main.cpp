@@ -53,7 +53,9 @@ glm::vec2 current_brush_point;
 GLuint texture_framebuffer = 0;
 
 int brush = 0;
-glm::vec4 brushColour = glm::vec4(1, 1, 1, 1);
+std::vector<GLuint> brushTextures; 
+glm::vec4 brushColour = glm::vec4(1, 0, 0, 1);
+float brushSize = 0.2;
 
 // Timing
 double lastFrame = 0.0;
@@ -199,19 +201,27 @@ void redraw_display(GLFWwindow* window){
 
 void redraw_texture(TextureCube* tex, GLfloat window_aspect_ratio){
 	glBindFramebuffer(GL_FRAMEBUFFER, texture_framebuffer);
-	glViewport(0,0,tex->width,tex->height);
+	glViewport(0, 0, tex->width, tex->height);
 	
 	texture_shader->use();
 	
+	glActiveTexture(GL_TEXTURE0);
 	skybox_textures[0].setActiveTexture(); //Necessary? probably
+	texture_shader->setInt("renderTexture", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, brushTextures[brush]);
+	texture_shader->setInt("brushTexture", 1);
 	
 	// Set the matrix so it can rasterize-check instead of raycast
 	glm::mat4 VP = glm::perspective(camera.getFOV(), window_aspect_ratio, 0.1f, 10.f) * camera.getViewMatrix();
 	current_shader->setMat4("VP",VP);
-	
+
 	// Set uniforms
 	texture_shader->setVec2("previousPoint",previous_brush_point);
 	texture_shader->setVec2("currentPoint",current_brush_point);
+	texture_shader->setVec4("brushColour", brushColour);
+	texture_shader->setFloat("brushSize", brushSize);
 	
 	skybox->drawVertices();
 	
@@ -295,7 +305,6 @@ int main(){
 
 	// Set up images previews for brushes
 	int numBrushes = 3;
-	std::vector<GLuint> brushTextures;
 	std::vector<const char*> filenames{ "../brushes/brush-0.png", "../brushes/brush-1.png", "../brushes/brush-2.png" };
 	for (int i = 0; i < numBrushes; i++) {
 		int brush_image_width = 0;
@@ -303,7 +312,6 @@ int main(){
 		GLuint brush_image_texture = 0;
 		bool ret = LoadTextureFromFile(filenames[i], &brush_image_texture, &brush_image_width, &brush_image_height);
 		brushTextures.push_back(brush_image_texture);
-		std::cout << ret << std::endl;
 	}
 	
 	// Set up file dialogs
@@ -404,6 +412,7 @@ int main(){
 				}
 				ImGui::NewLine();
 				ImGui::ColorEdit4("Brush Colour", glm::value_ptr(brushColour));
+				ImGui::DragFloat("Brush Size", &brushSize, 0.01, 0.01, 1.0);
 			}
 			ImGui::End();
 			
