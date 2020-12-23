@@ -17,7 +17,7 @@
 
 class TextureCube{
 public:
-	TextureCube() : width(1), height(1), nrChannels(4){
+	TextureCube() : width(2000), height(2000), nrChannels(4){
 		glGenTextures(1, &tex);
 		
 		glBindTexture(GL_TEXTURE_2D, tex);
@@ -56,7 +56,6 @@ public:
 	}
 	
 	void exportCubemap(const char* filepath){
-		// Edit filepath so it has a png at the end?
 		const unsigned int NUM_CHANNELS = 4;
 		
 		size_t image_size = width*height*NUM_CHANNELS;

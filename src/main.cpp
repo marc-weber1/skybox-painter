@@ -183,12 +183,15 @@ void redraw_display(GLFWwindow* window){
 	// Make sure we're on the right shader
 	current_shader->use();
 	
-	// Set the correct textures (Not sure if necessary?)
+	// Set the correct textures
 	skybox_textures[0].setActiveTexture();
 	
 	// Update camera angle
 	glm::mat4 VP = glm::perspective(camera.getFOV(), 1.f * width / height, 0.1f, 10.f) * camera.getViewMatrix();
 	current_shader->setMat4("VP",VP);
+	
+	// Update optional shader uniforms
+	current_shader->setFloat("_Time", (float) glfwGetTime());
 	
 	// DEBUG WIREFRAME RENDER
 	/*glClear(GL_COLOR_BUFFER_BIT);
@@ -305,7 +308,7 @@ int main(){
 
 	// Set up images previews for brushes
 	int numBrushes = 3;
-	std::vector<const char*> filenames{ "../brushes/brush-0.png", "../brushes/brush-1.png", "../brushes/brush-2.png" };
+	std::vector<const char*> filenames{ "brushes/brush-0.png", "brushes/brush-1.png", "brushes/brush-2.png" };
 	for (int i = 0; i < numBrushes; i++) {
 		int brush_image_width = 0;
 		int brush_image_height = 0;
@@ -395,7 +398,7 @@ int main(){
 				for (int i = 0; i < brushTextures.size(); i++) {
 					ImGui::SameLine();
 					std::string name = "Brush " + std::to_string(i);
-					ImGui::RadioButton(name.c_str(), &brush, i); 
+					ImGui::RadioButton(name.c_str(), &brush, i);;
 					
 				}
 				ImGui::NewLine();

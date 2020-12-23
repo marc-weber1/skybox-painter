@@ -7,11 +7,11 @@ in vec2 texCoords;
 uniform sampler2D renderTexture;
 uniform sampler2D brushTexture;
 
-uniform vec2 previousPoint; // from -1 to 1
-uniform vec2 currentPoint; // from -1 to 1
+uniform vec2 previousPoint; // [-1,1]^2
+uniform vec2 currentPoint; // [-1,1]^2
 
 uniform vec4 brushColour;
-uniform float brushSize; //should it be an int?
+uniform float brushSize;
 
 void main(){
 	
@@ -25,7 +25,7 @@ void main(){
 	if( 0.1 < clipPos.z ){ // Make sure it's not getting clipped by the near plane
 		if( abs(currentPoint.x - clipPos.x) < brushSize && abs(currentPoint.y - clipPos.y) < brushSize){ 
 			// Figure out the point on the brush texture to look at
-			vec2 position = clipPos.xy - currentPoint;
+			vec2 position = (clipPos.xy - currentPoint)/brushSize;
 			position.x = (position.x + 1.0) / 2.0;
 			position.y = (position.y + 1.0) / 2.0;
 

@@ -96,3 +96,10 @@ add_custom_command(TARGET ${RUN_EXEC}
 		${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:${RUN_EXEC}>/shaders
 	COMMENT "Copying shaders" VERBATIM
 	)
+	
+# Brushes
+add_custom_command(TARGET ${RUN_EXEC}
+	POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${CMAKE_SOURCE_DIR}/brushes $<TARGET_FILE_DIR:${RUN_EXEC}>/brushes
+	COMMENT "Copying brushes" VERBATIM
+	)
