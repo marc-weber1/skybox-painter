@@ -273,7 +273,7 @@ int main(){
 	previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
 	
 	// Load Rendering Shader
-	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
+	current_shader.reset(new Shader("shaders/default.vs","shaders/starnest.fs"));
 	
 	// Load Image
 	skybox_textures.push_back( TextureCube() );

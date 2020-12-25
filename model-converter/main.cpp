@@ -14,7 +14,7 @@ int main(){
 	for(int i=0; i<indices; i++){
 		const ModelOBJ::Vertex& v = model.getVertex( indexbuf[i] );
 		
-		printf("\t{ {%f,%f,%f},   {%f,%f,%f},   {%f,%f}},\n", v.position[0], v.position[1], v.position[2], v.normal[0], v.normal[1], v.normal[3], v.texCoord[0], v.texCoord[1] );
+		printf("\t{ {%f,%f,%f},   {%f,%f,%f},   {%f,%f}},\n", v.position[0], v.position[1], v.position[2], v.normal[0], v.normal[1], v.normal[2], v.texCoord[0], v.texCoord[1] );
 	}
 	
 	

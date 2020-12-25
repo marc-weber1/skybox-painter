@@ -17,7 +17,7 @@
 
 class TextureCube{
 public:
-	TextureCube() : width(2000), height(2000), nrChannels(4){
+	TextureCube() : width(1500), height(2000), nrChannels(4){
 		glGenTextures(1, &tex);
 		
 		glBindTexture(GL_TEXTURE_2D, tex);
