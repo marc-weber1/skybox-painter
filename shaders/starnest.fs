@@ -17,7 +17,7 @@ const vec4 _Color = vec4(1,1,1,1);
 const int _Volsteps = 9;
 const int _Iterations = 14;
 
-const vec4 _Scroll = vec4(1.3,1,0.6,0.01);
+const vec4 _Scroll = vec4(1.3,1,0.6,1);
 const vec4 _Center = vec4(1,0.3,0.5,0);
 const float _CamScroll = 0;
 const vec4 _Rotation = vec4(0,0,0,0.01);

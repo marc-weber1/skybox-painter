@@ -191,7 +191,7 @@ void redraw_display(GLFWwindow* window){
 	current_shader->setMat4("VP",VP);
 	
 	// Update optional shader uniforms
-	current_shader->setFloat("_Time", (float) glfwGetTime());
+	current_shader->setFloat("_Time", (float) (glfwGetTime()/100.) );
 	
 	// DEBUG WIREFRAME RENDER
 	/*glClear(GL_COLOR_BUFFER_BIT);
@@ -273,7 +273,7 @@ int main(){
 	previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
 	
 	// Load Rendering Shader
-	current_shader.reset(new Shader("shaders/default.vs","shaders/starnest.fs"));
+	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
 	
 	// Load Image
 	skybox_textures.push_back( TextureCube() );
