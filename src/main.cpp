@@ -30,12 +30,15 @@
 
 
 // CONSTANTS
-const int SCR_HEIGHT = 600;
-const int SCR_WIDTH = 800;
+const int SCR_HEIGHT_INIT = 600;
+const int SCR_WIDTH_INIT = 800;
 const double ROTATE_SPEED_X = -500; // Change the sign to invert the axis
 const double ROTATE_SPEED_Y = -300; // Change the sign to invert the axis
 const GLenum DRAW_BUFFERS[1] = {GL_COLOR_ATTACHMENT0};
 const double FRAMES_PER_SECOND = 60.;
+
+const char* WINDOW_NAME = "Skybox Painter";
+const char* FRAGMENT_SHADER = "shaders/oneimage.fs"; //Try starnest as well !
 
 // GLOBAL VARIABLES
 LookAtCamera camera(glm::vec3(0.f,0.f,0.f),0.1f);
@@ -247,7 +250,7 @@ int main(){
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "CPSC 591/691 A2", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH_INIT, SCR_HEIGHT_INIT, WINDOW_NAME, NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -273,7 +276,7 @@ int main(){
 	previous_brush_point = glm::vec2(nan(""),nan("")); // Use nans to signal to the gpu not to check the previous brush point
 	
 	// Load Rendering Shader
-	current_shader.reset(new Shader("shaders/default.vs","shaders/oneimage.fs"));
+	current_shader.reset(new Shader("shaders/default.vs",FRAGMENT_SHADER));
 	
 	// Load Image
 	skybox_textures.push_back( TextureCube() );
@@ -377,7 +380,7 @@ int main(){
 			}
 			ImGui::End();
 			
-			//File pickers
+			// File pickers
 			importImage.Display();
 			if(importImage.HasSelected()){
 				// std::cout << "Importing image from: " << importImage.GetSelected().generic_string() << std::endl;
@@ -392,7 +395,7 @@ int main(){
 				exportImage.ClearSelected();
 			}
 
-			// TODO: Figure out whether RadioButton with images or ImageButton works better
+			// Draw brush previews and selector
 			ImGui::Begin("Brushes");
 			{
 				for (int i = 0; i < brushTextures.size(); i++) {

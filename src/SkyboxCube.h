@@ -37,15 +37,13 @@ public:
 		//Unbind VAO for safety
 		glBindVertexArray(0);
 	}
-	
-	/*~SkyboxCube(){
-		//Delete the VBO/VAO?
-	}*/
 
+	// Buffer the skybox mesh into the gpu
 	void bufferModel(){
 		glBufferData( GL_ARRAY_BUFFER, sizeof(SKYBOX_CUBE), SKYBOX_CUBE, GL_STATIC_DRAW );
 	}
 
+	// Use the current shader to draw the skybox mesh
 	void drawVertices(){
 		glBindVertexArray( VertexVAOID );
 		
@@ -69,6 +67,7 @@ private:
 		glm::vec2 uv;
 	};
 
+	// The actual skybox mesh, generated with model-converter
 	const SkyboxVertex SKYBOX_CUBE[36] = {
 		{ {1.000000,1.000000,-1.000000},   {-0.577400,-0.577400,0.577400},   {0.333384,0.749957}},
         { {1.000000,1.000000,1.000000},   {-0.577400,-0.577400,-0.577400},   {0.666660,0.749957}},

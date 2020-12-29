@@ -1,3 +1,9 @@
+/*
+ *  Shader Class
+ *    Based on CPSC 591 Assignment 2, just a wrapping class for an openGL vert/frag shader pair
+*/
+
+
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -10,8 +16,6 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-
-#include "glsl-parser/parser.h"
 
 //v Replace this with an interface?
 #include "TextureCube.h"
@@ -103,11 +107,6 @@ public:
         if (geometryPath != nullptr)
             glDeleteShader(geometry);
 			
-			
-		// PARSE SHADER (to get number of textures)
-		/*glsl::parser shader_parser(fShaderCode, fragmentPath);
-		glsl::astTU *tu = shader_parser.parse(glsl::astTU::kFragment);
-		std::cout << tu->globals.size() << std::endl;*/
 			
 		// FOR TESTING, in the future figure out how many textures there are
 		GLuint texture0;

@@ -1,3 +1,10 @@
+/*
+ *  TextureCube
+ *    Represents a texture that can map onto a cube, with the mipmap defined by SkyboxCube
+ *    Aspect ratio should be anything where the height is bigger than the width
+*/
+
+
 #pragma once
 
 #include <glad/glad.h>
@@ -24,16 +31,16 @@ public:
 		// v Initialize with a transparent black image
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 		
+		// No filtering, so the image isn't blurred
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		
-		//glBindTexture(GL_TEXTURE_2D,0); //Reset
 	}
 	
 	void freeTexture(){
 		glDeleteTextures( 1, &tex );
 	}
 	
+	// Import from a file into GPU memory
 	bool import(const char* file_path){
 		
 		stbi_set_flip_vertically_on_load(true);
@@ -55,6 +62,7 @@ public:
 		return true;
 	}
 	
+	// Save whatever the GPU has in memory into a file
 	void exportCubemap(const char* filepath){
 		const unsigned int NUM_CHANNELS = 4;
 		
@@ -71,10 +79,12 @@ public:
 		
 	}
 	
+	// Set this texture as the render target, call before redrawing to the texture
 	void setRenderTarget(){
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0);
 	}
 	
+	// Set this texture as active, call before using the texture in a shader
 	void setActiveTexture(){
 		glBindTexture(GL_TEXTURE_2D, tex);
 	}
@@ -82,6 +92,6 @@ public:
 	int width, height, nrChannels;
 	
 private:
-	GLuint tex;
+	GLuint tex; // The texture we're storing in GPU memory
 	
 };
