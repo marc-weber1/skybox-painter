@@ -211,8 +211,9 @@ void redraw_texture(TextureCube* tex, GLfloat window_aspect_ratio){
 	
 	texture_shader->use();
 	
+	// Add the texture we're drawing to, so we can leave pixels the way they were
 	glActiveTexture(GL_TEXTURE0);
-	skybox_textures[0].setActiveTexture(); //Necessary? probably
+	skybox_textures[0].setActiveTexture();
 	texture_shader->setInt("renderTexture", 0);
 
 	glActiveTexture(GL_TEXTURE1);
