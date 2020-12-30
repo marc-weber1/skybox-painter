@@ -27,7 +27,7 @@ void main(){
 			// Figure out the point on the brush texture to look at
 			vec2 position = (clipPos.xy - currentPoint)/brushSize;
 			position.x = (position.x + 1.0) / 2.0;
-			position.y = (position.y + 1.0) / 2.0;
+			position.y = (-position.y + 1.0) / 2.0;
 
 			float brushAlpha = texture(brushTexture, position).a * brushColour.a;
 			vec3 blendedColour = (1-brushAlpha) * texture(renderTexture, texCoords).rgb + brushAlpha * brushColour.rgb;

@@ -145,6 +145,7 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
 	// Load from file
 	int image_width = 0;
 	int image_height = 0;
+	stbi_set_flip_vertically_on_load(false); // Store brush textures upside down; a hack because imgui flips the textures for some reason
 	unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
 	if (image_data == NULL)
 		return false;
